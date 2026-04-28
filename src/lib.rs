@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use iota::{
     IotaParser, Expression, ParseValue,
     action, alpha, alphanum, between, ch, digit, ignore, lazy,
@@ -31,8 +32,8 @@ pub enum Node {
     List(Vec<Node>),
     Let { name: String, value: Box<Node>, body: Box<Node> },
     If  { cond: Box<Node>, then: Box<Node>, els: Box<Node> },
-    FnDef { name: String, params: Vec<String>, body: Box<Node> },
-    Lambda { params: Vec<String>, body: Box<Node> },
+    FnDef { name: String, params: Vec<String>, body: Rc<Node> },
+    Lambda { params: Vec<String>, body: Rc<Node> },
     Match  { expr: Box<Node>, arms: Vec<MatchArm> },
     Pipe   { lhs: Box<Node>, rhs: Box<Node> },
     UseModule { path: String },
@@ -413,7 +414,7 @@ fn lambda_expr() -> Expression<LamVal> {
             let params: Vec<String> = parts[..parts.len()-1]
                 .iter().map(|v| v.as_str()).collect();
             let body = unwrap_node(parts.last().unwrap());
-            LamVal::Node(Node::Lambda { params, body: Box::new(body) })
+            LamVal::Node(Node::Lambda { params, body: Rc::new(body) })
         },
     )
 }
@@ -481,7 +482,7 @@ fn special_fn() -> Expression<LamVal> {
             let name   = parts[0].as_str();
             let params = parts[1..parts.len()-1].iter().map(|v| v.as_str()).collect();
             let body   = unwrap_node(parts.last().unwrap());
-            LamVal::Node(Node::FnDef { name, params, body: Box::new(body) })
+            LamVal::Node(Node::FnDef { name, params, body: Rc::new(body) })
         },
     )
 }
